@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>H90D AR</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #f4f4f1;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+    }
+    .status {
+      font-size: 15px;
+      color: #555;
+      margin-bottom: 24px;
+    }
+    /* 폴백 수동 버튼 (자동 실행 실패 시 표시) */
+    .ar-fallback {
+      display: none;
+      text-decoration: none;
+      background: #111;
+      color: #fff;
+      padding: 16px 28px;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 700;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    }
+    .ar-fallback img {
+      width: 0; height: 0; opacity: 0; position: absolute;
+    }
+  </style>
+</head>
+<body>
+
+  <p class="status" id="status">AR을 실행하는 중…</p>
+
+  <!-- iOS 폴백용 링크 (rel="ar" + 내부 img 필수) -->
+  <a id="ios-link" rel="ar" href="./H90D.usdz" class="ar-fallback">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAB" alt="" />
+    AR로 보기
+  </a>
+
+  <!-- Android 폴백용 링크 -->
+  <a id="android-link" href="#" class="ar-fallback">
+    AR로 보기
+  </a>
+
+  <script>
+    (function () {
+      var isIOS     = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      var isAndroid = /Android/.test(navigator.userAgent);
+      var status    = document.getElementById('status');
+
+      // GLB 절대 경로 생성
+      var base   = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+      var glbURL = base + 'H90D.glb';
+
+      if (isIOS) {
+        // ── iOS: AR Quick Look 자동 실행 ──
+        var a   = document.createElement('a');
+        a.rel   = 'ar';
+        a.href  = './H90D.usdz';
+        // Apple 요구사항: <a rel="ar"> 안에 <img> 필수
+        var img  = document.createElement('img');
+        img.src  = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAB';
+        img.style.cssText = 'position:absolute;width:0;height:0;opacity:0;';
+        a.appendChild(img);
+        document.body.appendChild(a);
+        a.click();
+
+        // 자동 실행 실패 대비 → 1.5초 후 수동 버튼 표시
+        setTimeout(function () {
+          status.textContent = 'AR이 자동 실행되지 않았다면 아래 버튼을 눌러주세요.';
+          document.getElementById('ios-link').style.display = 'inline-block';
+        }, 1500);
+
+      } else if (isAndroid) {
+        // ── Android: Scene Viewer 자동 실행 ──
+        var intentURL =
+          'intent://arvr.google.com/scene-viewer/1.0' +
+          '?file='  + encodeURIComponent(glbURL) +
+          '&mode=ar_only' +
+          '#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end;';
+
+        window.location.href = intentURL;
+
+        // 폴백
+        setTimeout(function () {
+          status.textContent = 'AR이 자동 실행되지 않았다면 아래 버튼을 눌러주세요.';
+          var btn  = document.getElementById('android-link');
+          btn.href = intentURL;
+          btn.style.display = 'inline-block';
+        }, 2000);
+
+      } else {
+        // ── 데스크톱: AR 미지원 안내 ──
+        status.textContent = 'AR은 모바일(iPhone / Android)에서만 지원됩니다. 휴대폰으로 이 링크를 열어주세요.';
+      }
+    })();
+  </script>
+
+</body>
+</html>
